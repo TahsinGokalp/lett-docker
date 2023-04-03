@@ -1,0 +1,40 @@
+version: "3"
+services:
+  web:
+    container_name: lett
+    build:
+      context: ""
+      dockerfile: Dockerfile
+    working_dir: /var/www/
+    depends_on: [ db ]
+    volumes:
+      - ../.:/var/www
+    networks:
+      - lett_network
+
+  db:
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: lett
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/setup.sql
+      - ./db-data:/var/lib/mysql
+    networks:
+      - lett_network
+
+  webserver:
+    image: nginx:stable-alpine
+    depends_on: [ web ]
+    volumes:
+      - ../.:/var/www/
+      - ./nginx/:/etc/nginx/conf.d/
+    ports:
+      - "1337:80"
+    networks:
+      - lett_network
+
+networks:
+  lett_network:
+    driver: bridge
